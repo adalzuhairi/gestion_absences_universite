@@ -111,7 +111,8 @@
               ],
               "path": [
                 "accounts",
-                "logout"
+                "logout",
+                ""
               ]
             },
             "description": "Supprime une éventuelle session existante."
@@ -156,7 +157,8 @@
               "path": [
                 "api",
                 "v1",
-                "schema"
+                "schema",
+                ""
               ]
             },
             "description": "Schéma OpenAPI 3 généré par drf-spectacular (public)."
@@ -187,7 +189,8 @@
               "path": [
                 "api",
                 "v1",
-                "docs"
+                "docs",
+                ""
               ]
             },
             "description": "Interface Swagger (à ouvrir aussi dans un navigateur)."
@@ -217,7 +220,8 @@
               "path": [
                 "api",
                 "v1",
-                "students"
+                "students",
+                ""
               ]
             },
             "description": "Sécurité : un visiteur anonyme ne doit rien voir."
@@ -247,7 +251,8 @@
               ],
               "path": [
                 "api",
-                "health"
+                "health",
+                ""
               ]
             },
             "description": "Le health check est protégé par jeton + liste d'IP autorisées : un appel externe sans jeton doit être refusé."
@@ -281,7 +286,8 @@
               ],
               "path": [
                 "accounts",
-                "login"
+                "login",
+                ""
               ]
             },
             "description": "Charge la page de connexion pour récupérer le cookie `csrftoken` (Django)."
@@ -313,7 +319,8 @@
               ],
               "path": [
                 "accounts",
-                "login"
+                "login",
+                ""
               ]
             },
             "description": "Connexion par session Django avec le compte **Administrateur** (`admin_email` / `admin_password` de l'environnement). Le cookie `sessionid` est ensuite envoyé automatiquement par Postman. Attendu : redirection 302 vers le tableau de bord. Si 200 = identifiants refusés ; si redirection vers verify_2fa = désactiver la 2FA de ce compte pour la démo.",
@@ -371,7 +378,8 @@
               "path": [
                 "api",
                 "v1",
-                "students"
+                "students",
+                ""
               ]
             },
             "description": "Liste paginée (20/page)."
@@ -409,7 +417,8 @@
               "path": [
                 "api",
                 "v1",
-                "students"
+                "students",
+                ""
               ],
               "query": [
                 {
@@ -454,7 +463,8 @@
               "path": [
                 "api",
                 "v1",
-                "students"
+                "students",
+                ""
               ],
               "query": [
                 {
@@ -497,7 +507,8 @@
                 "api",
                 "v1",
                 "students",
-                "{{student_id}}"
+                "{{student_id}}",
+                ""
               ]
             },
             "description": ""
@@ -529,7 +540,8 @@
                 "api",
                 "v1",
                 "students",
-                "999999"
+                "999999",
+                ""
               ]
             },
             "description": ""
@@ -559,7 +571,8 @@
               "path": [
                 "api",
                 "v1",
-                "courses"
+                "courses",
+                ""
               ]
             },
             "description": ""
@@ -597,7 +610,8 @@
                 "api",
                 "v1",
                 "courses",
-                "{{course_id}}"
+                "{{course_id}}",
+                ""
               ]
             },
             "description": ""
@@ -630,7 +644,8 @@
               "path": [
                 "api",
                 "v1",
-                "enrollments"
+                "enrollments",
+                ""
               ],
               "query": [
                 {
@@ -673,7 +688,8 @@
               "path": [
                 "api",
                 "v1",
-                "absences"
+                "absences",
+                ""
               ],
               "query": [
                 {
@@ -719,7 +735,8 @@
               "path": [
                 "api",
                 "v1",
-                "justifications"
+                "justifications",
+                ""
               ],
               "query": [
                 {
@@ -760,7 +777,8 @@
               "path": [
                 "api",
                 "v1",
-                "notifications"
+                "notifications",
+                ""
               ]
             },
             "description": ""
@@ -799,7 +817,8 @@
                 "v1",
                 "notifications",
                 "{{notification_id}}",
-                "read"
+                "read",
+                ""
               ]
             },
             "description": "Ignorer le résultat s'il n'y a aucune notification (404)."
@@ -830,7 +849,8 @@
                 "api",
                 "v1",
                 "notifications",
-                "read-all"
+                "read-all",
+                ""
               ]
             },
             "description": ""
@@ -862,7 +882,8 @@
                 "api",
                 "v1",
                 "analytics",
-                "dashboard"
+                "dashboard",
+                ""
               ]
             },
             "description": "Réservé à l'administrateur."
@@ -894,7 +915,8 @@
                 "api",
                 "v1",
                 "analytics",
-                "statistics"
+                "statistics",
+                ""
               ]
             },
             "description": "Réservé à l'administrateur."
@@ -927,7 +949,8 @@
                 "v1",
                 "exports",
                 "student-pdf",
-                "{{student_id}}"
+                "{{student_id}}",
+                ""
               ]
             },
             "description": "Utiliser « Save response » pour enregistrer le PDF."
@@ -959,7 +982,8 @@
                 "api",
                 "v1",
                 "exports",
-                "at-risk-excel"
+                "at-risk-excel",
+                ""
               ]
             },
             "description": ""
@@ -995,7 +1019,8 @@
               "path": [
                 "api",
                 "v1",
-                "students"
+                "students",
+                ""
               ]
             },
             "description": "Crée un étudiant de test (email aléatoire). Un mot de passe aléatoire est généré côté serveur.",
@@ -1036,7 +1061,8 @@
               "path": [
                 "api",
                 "v1",
-                "students"
+                "students",
+                ""
               ]
             },
             "description": "Le niveau doit être 1, 2 ou 3.",
@@ -1076,7 +1102,8 @@
               "path": [
                 "api",
                 "v1",
-                "students"
+                "students",
+                ""
               ]
             },
             "description": "Réutilise l'email de l'étudiant créé juste avant.",
@@ -1117,7 +1144,8 @@
                 "api",
                 "v1",
                 "students",
-                "{{new_student_id}}"
+                "{{new_student_id}}",
+                ""
               ]
             },
             "description": "",
@@ -1158,7 +1186,8 @@
                 "api",
                 "v1",
                 "students",
-                "{{new_student_id}}"
+                "{{new_student_id}}",
+                ""
               ]
             },
             "description": "Pas de suppression physique : le compte passe `actif=false`."
@@ -1189,7 +1218,8 @@
                 "api",
                 "v1",
                 "students",
-                "{{new_student_id}}"
+                "{{new_student_id}}",
+                ""
               ]
             },
             "description": ""
@@ -1221,7 +1251,8 @@
                 "api",
                 "v1",
                 "courses",
-                "{{inscription_course_id}}"
+                "{{inscription_course_id}}",
+                ""
               ]
             },
             "description": "Récupère une séance pour encoder une absence."
@@ -1254,7 +1285,8 @@
               "path": [
                 "api",
                 "v1",
-                "absences"
+                "absences",
+                ""
               ]
             },
             "description": "201 si créée ; 400 si une absence existe déjà pour cet étudiant et cette séance.",
@@ -1294,7 +1326,8 @@
               "path": [
                 "api",
                 "v1",
-                "absences"
+                "absences",
+                ""
               ]
             },
             "description": "",
@@ -1334,7 +1367,8 @@
                 "api",
                 "v1",
                 "absences",
-                "{{new_absence_id}}"
+                "{{new_absence_id}}",
+                ""
               ]
             },
             "description": "Nettoyage."
@@ -1368,7 +1402,8 @@
               ],
               "path": [
                 "accounts",
-                "login"
+                "login",
+                ""
               ]
             },
             "description": "Charge la page de connexion pour récupérer le cookie `csrftoken` (Django)."
@@ -1400,7 +1435,8 @@
               ],
               "path": [
                 "accounts",
-                "login"
+                "login",
+                ""
               ]
             },
             "description": "Connexion par session Django avec le compte **Professeur** (`prof_email` / `prof_password` de l'environnement). Le cookie `sessionid` est ensuite envoyé automatiquement par Postman. Attendu : redirection 302 vers le tableau de bord. Si 200 = identifiants refusés ; si redirection vers verify_2fa = désactiver la 2FA de ce compte pour la démo.",
@@ -1453,7 +1489,8 @@
               "path": [
                 "api",
                 "v1",
-                "courses"
+                "courses",
+                ""
               ]
             },
             "description": ""
@@ -1488,7 +1525,8 @@
               "path": [
                 "api",
                 "v1",
-                "students"
+                "students",
+                ""
               ]
             },
             "description": "Seulement les étudiants inscrits à ses cours."
@@ -1523,7 +1561,8 @@
               "path": [
                 "api",
                 "v1",
-                "absences"
+                "absences",
+                ""
               ]
             },
             "description": ""
@@ -1558,7 +1597,8 @@
               "path": [
                 "api",
                 "v1",
-                "students"
+                "students",
+                ""
               ]
             },
             "description": "",
@@ -1598,7 +1638,8 @@
                 "api",
                 "v1",
                 "analytics",
-                "dashboard"
+                "dashboard",
+                ""
               ]
             },
             "description": ""
@@ -1632,7 +1673,8 @@
               ],
               "path": [
                 "accounts",
-                "login"
+                "login",
+                ""
               ]
             },
             "description": "Charge la page de connexion pour récupérer le cookie `csrftoken` (Django)."
@@ -1664,7 +1706,8 @@
               ],
               "path": [
                 "accounts",
-                "login"
+                "login",
+                ""
               ]
             },
             "description": "Connexion par session Django avec le compte **Étudiant** (`student_email` / `student_password` de l'environnement). Le cookie `sessionid` est ensuite envoyé automatiquement par Postman. Attendu : redirection 302 vers le tableau de bord. Si 200 = identifiants refusés ; si redirection vers verify_2fa = désactiver la 2FA de ce compte pour la démo.",
@@ -1717,7 +1760,8 @@
               "path": [
                 "api",
                 "v1",
-                "students"
+                "students",
+                ""
               ]
             },
             "description": ""
@@ -1748,7 +1792,8 @@
               "path": [
                 "api",
                 "v1",
-                "courses"
+                "courses",
+                ""
               ]
             },
             "description": ""
@@ -1783,7 +1828,8 @@
               "path": [
                 "api",
                 "v1",
-                "absences"
+                "absences",
+                ""
               ],
               "query": [
                 {
@@ -1826,7 +1872,8 @@
               "path": [
                 "api",
                 "v1",
-                "justifications"
+                "justifications",
+                ""
               ]
             },
             "description": "⚠️ Avant d'envoyer : dans Body > form-data, choisir un fichier PDF/JPG pour la clé `document`.",
@@ -1878,7 +1925,8 @@
               "path": [
                 "api",
                 "v1",
-                "absences"
+                "absences",
+                ""
               ]
             },
             "description": "",
@@ -1918,7 +1966,8 @@
                 "api",
                 "v1",
                 "analytics",
-                "statistics"
+                "statistics",
+                ""
               ]
             },
             "description": ""
@@ -1949,7 +1998,8 @@
                 "api",
                 "v1",
                 "exports",
-                "at-risk-excel"
+                "at-risk-excel",
+                ""
               ]
             },
             "description": ""
@@ -1983,7 +2033,8 @@
               ],
               "path": [
                 "accounts",
-                "login"
+                "login",
+                ""
               ]
             },
             "description": "Charge la page de connexion pour récupérer le cookie `csrftoken` (Django)."
@@ -2015,7 +2066,8 @@
               ],
               "path": [
                 "accounts",
-                "login"
+                "login",
+                ""
               ]
             },
             "description": "Connexion par session Django avec le compte **Administrateur** (`admin_email` / `admin_password` de l'environnement). Le cookie `sessionid` est ensuite envoyé automatiquement par Postman. Attendu : redirection 302 vers le tableau de bord. Si 200 = identifiants refusés ; si redirection vers verify_2fa = désactiver la 2FA de ce compte pour la démo.",
@@ -2070,7 +2122,8 @@
                 "v1",
                 "justifications",
                 "{{justification_id}}",
-                "process"
+                "process",
+                ""
               ]
             },
             "description": "action = approve | reject. L'absence passe à JUSTIFIEE et des emails sont envoyés.",
@@ -2112,7 +2165,8 @@
                 "v1",
                 "justifications",
                 "{{justification_id}}",
-                "process"
+                "process",
+                ""
               ]
             },
             "description": "Un justificatif déjà traité ne peut pas l'être une seconde fois.",
@@ -2153,7 +2207,8 @@
                 "v1",
                 "justifications",
                 "{{justification_id}}",
-                "process"
+                "process",
+                ""
               ]
             },
             "description": "",
@@ -2191,7 +2246,8 @@
               ],
               "path": [
                 "accounts",
-                "logout"
+                "logout",
+                ""
               ]
             },
             "description": ""
