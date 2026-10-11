@@ -12,7 +12,7 @@
         "type": "text/javascript",
         "exec": [
           "// Ajoute automatiquement les en-têtes CSRF exigés par Django pour POST/PUT/PATCH/DELETE",
-          "const base = pm.environment.get('baseUrl') || pm.collectionVariables.get('baseUrl');",
+          "const base = pm.variables.get('baseUrl');",
           "pm.request.headers.upsert({ key: 'Referer', value: base + '/' });",
           "pm.request.headers.upsert({ key: 'Origin', value: base });",
           "if (pm.request.method !== 'GET') {",
@@ -34,6 +34,10 @@
     }
   ],
   "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://absences.infotechno.eu"
+    },
     {
       "key": "csrftoken",
       "value": ""
@@ -144,7 +148,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.sendRequest(pm.environment.get('baseUrl') + '/accounts/login/', (e, r) => {",
+                  "pm.sendRequest(pm.variables.get('baseUrl') + '/accounts/login/', (e, r) => {",
                   "  const m = r && r.text().match(/name=\"csrfmiddlewaretoken\" value=\"([^\"]+)\"/);",
                   "  if (m) pm.collectionVariables.set('csrftoken', m[1]);",
                   "});"
