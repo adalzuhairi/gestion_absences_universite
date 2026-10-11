@@ -1,0 +1,2217 @@
+{
+  "info": {
+    "_postman_id": "a7628ff3-e586-48f3-847c-90c8815a57ff",
+    "name": "UniAbsences API",
+    "description": "API REST v1 de UniAbsences (Django REST Framework).\n\n**Authentification** : session Django (cookie `sessionid`) + jeton CSRF ajouté automatiquement par le script de collection.\n**Rôles** : ADMIN, SECRETAIRE, PROFESSEUR, ETUDIANT — chaque dossier montre ce qu'un rôle peut et ne peut pas faire.\n**Pagination** : `?page=` / `?page_size=` (max 100). **Recherche** : `?search=`. **Tri** : `?ordering=`.\n**Limites** : 500 req/h par utilisateur, 60 écritures d'absences/h, 20 dépôts de justificatifs/h.\n\nLancer les dossiers dans l'ordre (Run collection).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Ajoute automatiquement les en-têtes CSRF exigés par Django pour POST/PUT/PATCH/DELETE",
+          "const base = pm.environment.get('baseUrl') || pm.collectionVariables.get('baseUrl');",
+          "pm.request.headers.upsert({ key: 'Referer', value: base + '/' });",
+          "pm.request.headers.upsert({ key: 'Origin', value: base });",
+          "if (pm.request.method !== 'GET') {",
+          "  const tok = pm.collectionVariables.get('csrftoken');",
+          "  if (tok) pm.request.headers.upsert({ key: 'X-CSRFToken', value: tok });",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Après chaque réponse : mémorise le dernier cookie csrftoken (Django le régénère à la connexion)",
+          "if (pm.cookies.has('csrftoken')) pm.collectionVariables.set('csrftoken', pm.cookies.get('csrftoken'));"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "csrftoken",
+      "value": ""
+    },
+    {
+      "key": "current_role",
+      "value": ""
+    },
+    {
+      "key": "student_id",
+      "value": ""
+    },
+    {
+      "key": "course_id",
+      "value": ""
+    },
+    {
+      "key": "inscription_id",
+      "value": ""
+    },
+    {
+      "key": "inscription_course_id",
+      "value": ""
+    },
+    {
+      "key": "seance_id",
+      "value": ""
+    },
+    {
+      "key": "new_student_id",
+      "value": ""
+    },
+    {
+      "key": "new_absence_id",
+      "value": ""
+    },
+    {
+      "key": "notification_id",
+      "value": ""
+    },
+    {
+      "key": "student_absence_id",
+      "value": ""
+    },
+    {
+      "key": "justification_id",
+      "value": ""
+    },
+    {
+      "key": "id_departement",
+      "value": ""
+    },
+    {
+      "key": "id_annee",
+      "value": ""
+    },
+    {
+      "key": "new_student_email",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Public & sécurité (sans connexion)",
+      "item": [
+        {
+          "name": "Déconnexion (repartir propre)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/logout/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "logout"
+              ]
+            },
+            "description": "Supprime une éventuelle session existante."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200 ou 302\", () => pm.expect(pm.response.code).to.be.oneOf([200, 302]));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.sendRequest(pm.environment.get('baseUrl') + '/accounts/login/', (e, r) => {",
+                  "  const m = r && r.text().match(/name=\"csrfmiddlewaretoken\" value=\"([^\"]+)\"/);",
+                  "  if (m) pm.collectionVariables.set('csrftoken', m[1]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "Schéma OpenAPI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/schema/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "schema"
+              ]
+            },
+            "description": "Schéma OpenAPI 3 généré par drf-spectacular (public)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Contient openapi\", () => pm.expect(pm.response.text()).to.include(\"openapi\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Documentation Swagger UI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/docs/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "docs"
+              ]
+            },
+            "description": "Interface Swagger (à ouvrir aussi dans un navigateur)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Accès refusé sans authentification",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/students/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "students"
+              ]
+            },
+            "description": "Sécurité : un visiteur anonyme ne doit rien voir."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 401 ou 403\", () => pm.expect(pm.response.code).to.be.oneOf([401, 403]));",
+                  "pm.test(\"Message d'erreur DRF\", () => pm.expect(pm.response.json()).to.have.property(\"detail\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Health check sans jeton",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            },
+            "description": "Le health check est protégé par jeton + liste d'IP autorisées : un appel externe sans jeton doit être refusé."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 401 ou 403 ou 404\", () => pm.expect(pm.response.code).to.be.oneOf([401, 403, 404]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Admin - Connexion",
+      "item": [
+        {
+          "name": "Obtenir le jeton CSRF (Administrateur)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/login/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "login"
+              ]
+            },
+            "description": "Charge la page de connexion pour récupérer le cookie `csrftoken` (Django)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "const m = pm.response.text().match(/name=\"csrfmiddlewaretoken\" value=\"([^\"]+)\"/);",
+                  "if (m) pm.collectionVariables.set(\"csrftoken\", m[1]);",
+                  "pm.test(\"Jeton CSRF récupéré\", () => pm.expect(pm.collectionVariables.get(\"csrftoken\")).to.not.be.empty);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Connexion Administrateur",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/login/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "login"
+              ]
+            },
+            "description": "Connexion par session Django avec le compte **Administrateur** (`admin_email` / `admin_password` de l'environnement). Le cookie `sessionid` est ensuite envoyé automatiquement par Postman. Attendu : redirection 302 vers le tableau de bord. Si 200 = identifiants refusés ; si redirection vers verify_2fa = désactiver la 2FA de ce compte pour la démo.",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "{{admin_email}}"
+                },
+                {
+                  "key": "password",
+                  "value": "{{admin_password}}"
+                },
+                {
+                  "key": "csrfmiddlewaretoken",
+                  "value": "{{csrftoken}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Connexion réussie (302)\", () => pm.response.to.have.status(302));",
+                  "const loc = pm.response.headers.get(\"Location\") || \"\";",
+                  "pm.test(\"Pas de redirection vers login ni 2FA\", () => { pm.expect(loc).to.not.include(\"/login\"); pm.expect(loc).to.not.include(\"2fa\"); });",
+                  "pm.collectionVariables.set(\"current_role\", \"admin\");"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Admin - Lecture",
+      "item": [
+        {
+          "name": "Lister les étudiants",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/students/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "students"
+              ]
+            },
+            "description": "Liste paginée (20/page)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Réponse paginée (count, results)\", () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property(\"count\");",
+                  "  pm.expect(j.results).to.be.an(\"array\");",
+                  "});",
+                  "pm.test(\"Temps de réponse < 2000 ms\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "const _r = pm.response.json().results || [];",
+                  "if (_r.length) { pm.collectionVariables.set(\"student_id\", _r[0].id_utilisateur); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechercher un étudiant",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/students/?search=a&ordering=nom",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "students"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "a"
+                },
+                {
+                  "key": "ordering",
+                  "value": "nom"
+                }
+              ]
+            },
+            "description": "Recherche texte sur nom / prénom / email."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Réponse paginée (count, results)\", () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property(\"count\");",
+                  "  pm.expect(j.results).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filtrer étudiants par niveau",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/students/?niveau=1&page_size=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "students"
+              ],
+              "query": [
+                {
+                  "key": "niveau",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "Filtre exact niveau (1, 2 ou 3) + taille de page."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Tous de niveau 1\", () => pm.response.json().results.forEach(s => pm.expect(s.niveau).to.eql(1)));",
+                  "pm.test(\"Max 5 résultats\", () => pm.expect(pm.response.json().results.length).to.be.at.most(5));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Détail d'un étudiant",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/students/{{student_id}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "students",
+                "{{student_id}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Champs attendus\", () => pm.expect(pm.response.json()).to.include.keys(\"id_utilisateur\",\"nom\",\"prenom\",\"email\",\"niveau\",\"actif\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Étudiant inexistant (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/students/999999/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "students",
+                "999999"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lister les cours",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/courses/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "courses"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Réponse paginée (count, results)\", () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property(\"count\");",
+                  "  pm.expect(j.results).to.be.an(\"array\");",
+                  "});",
+                  "const _r = pm.response.json().results || [];",
+                  "if (_r.length) { pm.collectionVariables.set(\"course_id\", _r[0].id_cours); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Détail d'un cours (séances + prérequis)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/courses/{{course_id}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "courses",
+                "{{course_id}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "const c = pm.response.json();",
+                  "pm.test(\"Contient seances et prerequisites\", () => pm.expect(c).to.include.keys(\"seances\",\"prerequisites\",\"seuil_effectif\"));",
+                  "pm.collectionVariables.set(\"id_departement\", c.id_departement); pm.collectionVariables.set(\"id_annee\", c.id_annee);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lister les inscriptions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/enrollments/?status=EN_COURS",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "enrollments"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "EN_COURS"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Réponse paginée (count, results)\", () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property(\"count\");",
+                  "  pm.expect(j.results).to.be.an(\"array\");",
+                  "});",
+                  "const r = pm.response.json().results;",
+                  "if (r.length) { pm.collectionVariables.set(\"inscription_id\", r[0].id_inscription); pm.collectionVariables.set(\"inscription_course_id\", r[0].id_cours); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lister les absences (filtres)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/absences/?statut=NON_JUSTIFIEE&ordering=-id_absence",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "absences"
+              ],
+              "query": [
+                {
+                  "key": "statut",
+                  "value": "NON_JUSTIFIEE"
+                },
+                {
+                  "key": "ordering",
+                  "value": "-id_absence"
+                }
+              ]
+            },
+            "description": "Filtres possibles : statut, type_absence, etudiant, cours, date_from, date_to."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Réponse paginée (count, results)\", () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property(\"count\");",
+                  "  pm.expect(j.results).to.be.an(\"array\");",
+                  "});",
+                  "pm.test(\"Toutes NON_JUSTIFIEE\", () => pm.response.json().results.forEach(a => pm.expect(a.statut).to.eql(\"NON_JUSTIFIEE\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lister les justificatifs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/justifications/?state=EN_ATTENTE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "justifications"
+              ],
+              "query": [
+                {
+                  "key": "state",
+                  "value": "EN_ATTENTE"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Réponse paginée (count, results)\", () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property(\"count\");",
+                  "  pm.expect(j.results).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mes notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Réponse paginée (count, results)\", () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property(\"count\");",
+                  "  pm.expect(j.results).to.be.an(\"array\");",
+                  "});",
+                  "const _r = pm.response.json().results || [];",
+                  "if (_r.length) { pm.collectionVariables.set(\"notification_id\", _r[0].id_notification); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Marquer une notification comme lue",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/{{notification_id}}/read/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "{{notification_id}}",
+                "read"
+              ]
+            },
+            "description": "Ignorer le résultat s'il n'y a aucune notification (404)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200 ou 404\", () => pm.expect(pm.response.code).to.be.oneOf([200, 404]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tout marquer comme lu",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/read-all/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "read-all"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Retourne marked_read\", () => pm.expect(pm.response.json()).to.have.property(\"marked_read\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Analytics - tableau de bord (KPI)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/analytics/dashboard/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analytics",
+                "dashboard"
+              ]
+            },
+            "description": "Réservé à l'administrateur."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"KPI présents\", () => pm.expect(pm.response.json()).to.include.keys(\"total_students\",\"total_absences\",\"students_at_risk\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Analytics - statistiques",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/analytics/statistics/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analytics",
+                "statistics"
+              ]
+            },
+            "description": "Réservé à l'administrateur."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Séries statistiques\", () => pm.expect(pm.response.json()).to.include.keys(\"monthly_absences\",\"absences_by_status\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Export PDF d'un étudiant",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/exports/student-pdf/{{student_id}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "exports",
+                "student-pdf",
+                "{{student_id}}"
+              ]
+            },
+            "description": "Utiliser « Save response » pour enregistrer le PDF."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Content-Type PDF\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"pdf\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Export Excel des étudiants à risque",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/exports/at-risk-excel/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "exports",
+                "at-risk-excel"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Fichier Excel\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"spreadsheet\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Admin - CRUD (crée puis nettoie)",
+      "item": [
+        {
+          "name": "Créer un étudiant",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/students/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "students"
+              ]
+            },
+            "description": "Crée un étudiant de test (email aléatoire). Un mot de passe aléatoire est généré côté serveur.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Postman\",\n  \"prenom\": \"Demo\",\n  \"email\": \"demo.postman.{{$timestamp}}@example.com\",\n  \"niveau\": 1,\n  \"actif\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 201\", () => pm.response.to.have.status(201));",
+                  "const s = pm.response.json(); pm.collectionVariables.set(\"new_student_id\", s.id_utilisateur); pm.collectionVariables.set(\"new_student_email\", s.email);",
+                  "pm.test(\"Nom correct\", () => pm.expect(s.nom).to.eql(\"Postman\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validation : niveau invalide (400)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/students/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "students"
+              ]
+            },
+            "description": "Le niveau doit être 1, 2 ou 3.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"X\",\n  \"prenom\": \"Y\",\n  \"email\": \"bad.{{$timestamp}}@example.com\",\n  \"niveau\": 7\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Erreur sur niveau\", () => pm.expect(pm.response.json()).to.have.property(\"niveau\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validation : email déjà utilisé (400)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/students/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "students"
+              ]
+            },
+            "description": "Réutilise l'email de l'étudiant créé juste avant.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"X\",\n  \"prenom\": \"Y\",\n  \"email\": \"{{new_student_email}}\",\n  \"niveau\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Erreur sur email\", () => pm.expect(pm.response.json()).to.have.property(\"email\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modifier l'étudiant (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/students/{{new_student_id}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "students",
+                "{{new_student_id}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"niveau\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Niveau mis à jour\", () => pm.expect(pm.response.json().niveau).to.eql(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Désactiver l'étudiant (DELETE = soft delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/students/{{new_student_id}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "students",
+                "{{new_student_id}}"
+              ]
+            },
+            "description": "Pas de suppression physique : le compte passe `actif=false`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Vérifier la désactivation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/students/{{new_student_id}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "students",
+                "{{new_student_id}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"actif = false\", () => pm.expect(pm.response.json().actif).to.be.false);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Préparer : séance du cours de l'inscription",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/courses/{{inscription_course_id}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "courses",
+                "{{inscription_course_id}}"
+              ]
+            },
+            "description": "Récupère une séance pour encoder une absence."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "const s = pm.response.json().seances || [];",
+                  "pm.test(\"Le cours a au moins une séance\", () => pm.expect(s.length).to.be.above(0));",
+                  "if (s.length) pm.collectionVariables.set(\"seance_id\", s[s.length - 1].id_seance);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Encoder une absence",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/absences/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "absences"
+              ]
+            },
+            "description": "201 si créée ; 400 si une absence existe déjà pour cet étudiant et cette séance.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_inscription\": \"{{inscription_id}}\",\n  \"id_seance\": \"{{seance_id}}\",\n  \"type_absence\": \"ABSENT\",\n  \"note_professeur\": \"Créée via Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 201 ou 400\", () => pm.expect(pm.response.code).to.be.oneOf([201, 400]));",
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"new_absence_id\", pm.response.json().id_absence); else pm.collectionVariables.unset(\"new_absence_id\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validation : absence partielle sans durée (400)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/absences/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "absences"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_inscription\": \"{{inscription_id}}\",\n  \"id_seance\": \"{{seance_id}}\",\n  \"type_absence\": \"PARTIEL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Supprimer l'absence créée",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/absences/{{new_absence_id}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "absences",
+                "{{new_absence_id}}"
+              ]
+            },
+            "description": "Nettoyage."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 204 ou 404\", () => pm.expect(pm.response.code).to.be.oneOf([204, 404]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Professeur - permissions",
+      "item": [
+        {
+          "name": "Obtenir le jeton CSRF (Professeur)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/login/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "login"
+              ]
+            },
+            "description": "Charge la page de connexion pour récupérer le cookie `csrftoken` (Django)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "const m = pm.response.text().match(/name=\"csrfmiddlewaretoken\" value=\"([^\"]+)\"/);",
+                  "if (m) pm.collectionVariables.set(\"csrftoken\", m[1]);",
+                  "pm.test(\"Jeton CSRF récupéré\", () => pm.expect(pm.collectionVariables.get(\"csrftoken\")).to.not.be.empty);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Connexion Professeur",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/login/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "login"
+              ]
+            },
+            "description": "Connexion par session Django avec le compte **Professeur** (`prof_email` / `prof_password` de l'environnement). Le cookie `sessionid` est ensuite envoyé automatiquement par Postman. Attendu : redirection 302 vers le tableau de bord. Si 200 = identifiants refusés ; si redirection vers verify_2fa = désactiver la 2FA de ce compte pour la démo.",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "{{prof_email}}"
+                },
+                {
+                  "key": "password",
+                  "value": "{{prof_password}}"
+                },
+                {
+                  "key": "csrfmiddlewaretoken",
+                  "value": "{{csrftoken}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Connexion réussie (302)\", () => pm.response.to.have.status(302));",
+                  "const loc = pm.response.headers.get(\"Location\") || \"\";",
+                  "pm.test(\"Pas de redirection vers login ni 2FA\", () => { pm.expect(loc).to.not.include(\"/login\"); pm.expect(loc).to.not.include(\"2fa\"); });",
+                  "pm.collectionVariables.set(\"current_role\", \"prof\");"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "Mes cours (uniquement les siens)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/courses/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "courses"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Réponse paginée (count, results)\", () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property(\"count\");",
+                  "  pm.expect(j.results).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mes étudiants",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/students/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "students"
+              ]
+            },
+            "description": "Seulement les étudiants inscrits à ses cours."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Réponse paginée (count, results)\", () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property(\"count\");",
+                  "  pm.expect(j.results).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Absences de mes cours",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/absences/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "absences"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Réponse paginée (count, results)\", () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property(\"count\");",
+                  "  pm.expect(j.results).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Interdit : créer un étudiant (403)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/students/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "students"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"X\",\n  \"prenom\": \"Y\",\n  \"email\": \"x.{{$timestamp}}@example.com\",\n  \"niveau\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Interdit : analytics admin (403)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/analytics/dashboard/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analytics",
+                "dashboard"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Étudiant - permissions & justificatif",
+      "item": [
+        {
+          "name": "Obtenir le jeton CSRF (Étudiant)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/login/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "login"
+              ]
+            },
+            "description": "Charge la page de connexion pour récupérer le cookie `csrftoken` (Django)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "const m = pm.response.text().match(/name=\"csrfmiddlewaretoken\" value=\"([^\"]+)\"/);",
+                  "if (m) pm.collectionVariables.set(\"csrftoken\", m[1]);",
+                  "pm.test(\"Jeton CSRF récupéré\", () => pm.expect(pm.collectionVariables.get(\"csrftoken\")).to.not.be.empty);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Connexion Étudiant",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/login/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "login"
+              ]
+            },
+            "description": "Connexion par session Django avec le compte **Étudiant** (`student_email` / `student_password` de l'environnement). Le cookie `sessionid` est ensuite envoyé automatiquement par Postman. Attendu : redirection 302 vers le tableau de bord. Si 200 = identifiants refusés ; si redirection vers verify_2fa = désactiver la 2FA de ce compte pour la démo.",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "{{student_email}}"
+                },
+                {
+                  "key": "password",
+                  "value": "{{student_password}}"
+                },
+                {
+                  "key": "csrfmiddlewaretoken",
+                  "value": "{{csrftoken}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Connexion réussie (302)\", () => pm.response.to.have.status(302));",
+                  "const loc = pm.response.headers.get(\"Location\") || \"\";",
+                  "pm.test(\"Pas de redirection vers login ni 2FA\", () => { pm.expect(loc).to.not.include(\"/login\"); pm.expect(loc).to.not.include(\"2fa\"); });",
+                  "pm.collectionVariables.set(\"current_role\", \"student\");"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "Mon profil (seul étudiant visible)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/students/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "students"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Ne voit que lui-même\", () => pm.expect(pm.response.json().count).to.eql(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mes cours",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/courses/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "courses"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Réponse paginée (count, results)\", () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property(\"count\");",
+                  "  pm.expect(j.results).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mes absences non justifiées",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/absences/?statut=NON_JUSTIFIEE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "absences"
+              ],
+              "query": [
+                {
+                  "key": "statut",
+                  "value": "NON_JUSTIFIEE"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Réponse paginée (count, results)\", () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property(\"count\");",
+                  "  pm.expect(j.results).to.be.an(\"array\");",
+                  "});",
+                  "const _r = pm.response.json().results || [];",
+                  "if (_r.length) { pm.collectionVariables.set(\"student_absence_id\", _r[0].id_absence); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Soumettre un justificatif (fichier)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/justifications/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "justifications"
+              ]
+            },
+            "description": "⚠️ Avant d'envoyer : dans Body > form-data, choisir un fichier PDF/JPG pour la clé `document`.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "id_absence",
+                  "value": "{{student_absence_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "commentaire",
+                  "value": "Certificat médical (test Postman)",
+                  "type": "text"
+                },
+                {
+                  "key": "document",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"État EN_ATTENTE\", () => pm.expect(pm.response.json().state).to.eql(\"EN_ATTENTE\"));",
+                  "pm.collectionVariables.set(\"justification_id\", pm.response.json().id_justification);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Interdit : encoder une absence (403)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/absences/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "absences"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_inscription\": 1,\n  \"id_seance\": 1,\n  \"type_absence\": \"ABSENT\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Interdit : analytics (403)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/analytics/statistics/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analytics",
+                "statistics"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Interdit : export Excel (403)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/exports/at-risk-excel/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "exports",
+                "at-risk-excel"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Admin - Traitement du justificatif",
+      "item": [
+        {
+          "name": "Obtenir le jeton CSRF (Administrateur)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/login/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "login"
+              ]
+            },
+            "description": "Charge la page de connexion pour récupérer le cookie `csrftoken` (Django)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "const m = pm.response.text().match(/name=\"csrfmiddlewaretoken\" value=\"([^\"]+)\"/);",
+                  "if (m) pm.collectionVariables.set(\"csrftoken\", m[1]);",
+                  "pm.test(\"Jeton CSRF récupéré\", () => pm.expect(pm.collectionVariables.get(\"csrftoken\")).to.not.be.empty);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Connexion Administrateur",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/login/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "login"
+              ]
+            },
+            "description": "Connexion par session Django avec le compte **Administrateur** (`admin_email` / `admin_password` de l'environnement). Le cookie `sessionid` est ensuite envoyé automatiquement par Postman. Attendu : redirection 302 vers le tableau de bord. Si 200 = identifiants refusés ; si redirection vers verify_2fa = désactiver la 2FA de ce compte pour la démo.",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "{{admin_email}}"
+                },
+                {
+                  "key": "password",
+                  "value": "{{admin_password}}"
+                },
+                {
+                  "key": "csrfmiddlewaretoken",
+                  "value": "{{csrftoken}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Connexion réussie (302)\", () => pm.response.to.have.status(302));",
+                  "const loc = pm.response.headers.get(\"Location\") || \"\";",
+                  "pm.test(\"Pas de redirection vers login ni 2FA\", () => { pm.expect(loc).to.not.include(\"/login\"); pm.expect(loc).to.not.include(\"2fa\"); });",
+                  "pm.collectionVariables.set(\"current_role\", \"admin\");"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "Approuver le justificatif",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/justifications/{{justification_id}}/process/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "justifications",
+                "{{justification_id}}",
+                "process"
+              ]
+            },
+            "description": "action = approve | reject. L'absence passe à JUSTIFIEE et des emails sont envoyés.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"approve\",\n  \"commentaire_gestion\": \"Accepté (démo Postman)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"ACCEPTEE\", () => pm.expect(pm.response.json().state).to.eql(\"ACCEPTEE\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retraiter le même justificatif (400)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/justifications/{{justification_id}}/process/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "justifications",
+                "{{justification_id}}",
+                "process"
+              ]
+            },
+            "description": "Un justificatif déjà traité ne peut pas l'être une seconde fois.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"reject\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Action invalide (400)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/justifications/{{justification_id}}/process/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "justifications",
+                "{{justification_id}}",
+                "process"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"maybe\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Déconnexion",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/logout/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "logout"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200 ou 302\", () => pm.expect(pm.response.code).to.be.oneOf([200, 302]));"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        }
+      ]
+    }
+  ]
+}
