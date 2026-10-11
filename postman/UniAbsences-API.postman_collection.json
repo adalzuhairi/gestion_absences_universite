@@ -364,10 +364,24 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "if (pm.response.code === 200) console.error(\"Identifiants refusés par Django pour\", pm.variables.get(\"admin_email\"), \"(formulaire réaffiché) : vérifie email / mot de passe\");",
                   "pm.test(\"Connexion réussie (302)\", () => pm.response.to.have.status(302));",
                   "const loc = pm.response.headers.get(\"Location\") || \"\";",
                   "pm.test(\"Pas de redirection vers login ni 2FA\", () => { pm.expect(loc).to.not.include(\"/login\"); pm.expect(loc).to.not.include(\"2fa\"); });",
                   "pm.collectionVariables.set(\"current_role\", \"admin\");"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const email = (pm.variables.get(\"admin_email\") || \"\").trim();",
+                  "const password = (pm.variables.get(\"admin_password\") || \"\").trim();",
+                  "if (!email || !password) throw new Error(\"admin_email / admin_password vides : sélectionne l'environnement UniAbsences - Production et remplis Current value\");",
+                  "pm.variables.set(\"admin_email\", email); pm.variables.set(\"admin_password\", password);",
+                  "console.log(\"Connexion avec\", email);"
                 ]
               }
             }
@@ -1761,10 +1775,24 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "if (pm.response.code === 200) console.error(\"Identifiants refusés par Django pour\", pm.variables.get(\"prof_email\"), \"(formulaire réaffiché) : vérifie email / mot de passe\");",
                   "pm.test(\"Connexion réussie (302)\", () => pm.response.to.have.status(302));",
                   "const loc = pm.response.headers.get(\"Location\") || \"\";",
                   "pm.test(\"Pas de redirection vers login ni 2FA\", () => { pm.expect(loc).to.not.include(\"/login\"); pm.expect(loc).to.not.include(\"2fa\"); });",
                   "pm.collectionVariables.set(\"current_role\", \"prof\");"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const email = (pm.variables.get(\"prof_email\") || \"\").trim();",
+                  "const password = (pm.variables.get(\"prof_password\") || \"\").trim();",
+                  "if (!email || !password) throw new Error(\"prof_email / prof_password vides : sélectionne l'environnement UniAbsences - Production et remplis Current value\");",
+                  "pm.variables.set(\"prof_email\", email); pm.variables.set(\"prof_password\", password);",
+                  "console.log(\"Connexion avec\", email);"
                 ]
               }
             }
@@ -2153,10 +2181,24 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "if (pm.response.code === 200) console.error(\"Identifiants refusés par Django pour\", pm.variables.get(\"student_email\"), \"(formulaire réaffiché) : vérifie email / mot de passe\");",
                   "pm.test(\"Connexion réussie (302)\", () => pm.response.to.have.status(302));",
                   "const loc = pm.response.headers.get(\"Location\") || \"\";",
                   "pm.test(\"Pas de redirection vers login ni 2FA\", () => { pm.expect(loc).to.not.include(\"/login\"); pm.expect(loc).to.not.include(\"2fa\"); });",
                   "pm.collectionVariables.set(\"current_role\", \"student\");"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const email = (pm.variables.get(\"student_email\") || \"\").trim();",
+                  "const password = (pm.variables.get(\"student_password\") || \"\").trim();",
+                  "if (!email || !password) throw new Error(\"student_email / student_password vides : sélectionne l'environnement UniAbsences - Production et remplis Current value\");",
+                  "pm.variables.set(\"student_email\", email); pm.variables.set(\"student_password\", password);",
+                  "console.log(\"Connexion avec\", email);"
                 ]
               }
             }
@@ -2626,10 +2668,24 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "if (pm.response.code === 200) console.error(\"Identifiants refusés par Django pour\", pm.variables.get(\"admin_email\"), \"(formulaire réaffiché) : vérifie email / mot de passe\");",
                   "pm.test(\"Connexion réussie (302)\", () => pm.response.to.have.status(302));",
                   "const loc = pm.response.headers.get(\"Location\") || \"\";",
                   "pm.test(\"Pas de redirection vers login ni 2FA\", () => { pm.expect(loc).to.not.include(\"/login\"); pm.expect(loc).to.not.include(\"2fa\"); });",
                   "pm.collectionVariables.set(\"current_role\", \"admin\");"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const email = (pm.variables.get(\"admin_email\") || \"\").trim();",
+                  "const password = (pm.variables.get(\"admin_password\") || \"\").trim();",
+                  "if (!email || !password) throw new Error(\"admin_email / admin_password vides : sélectionne l'environnement UniAbsences - Production et remplis Current value\");",
+                  "pm.variables.set(\"admin_email\", email); pm.variables.set(\"admin_password\", password);",
+                  "console.log(\"Connexion avec\", email);"
                 ]
               }
             }
@@ -2877,10 +2933,24 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "if (pm.response.code === 200) console.error(\"Identifiants refusés par Django pour\", pm.variables.get(\"student_email\"), \"(formulaire réaffiché) : vérifie email / mot de passe\");",
                   "pm.test(\"Connexion réussie (302)\", () => pm.response.to.have.status(302));",
                   "const loc = pm.response.headers.get(\"Location\") || \"\";",
                   "pm.test(\"Pas de redirection vers login ni 2FA\", () => { pm.expect(loc).to.not.include(\"/login\"); pm.expect(loc).to.not.include(\"2fa\"); });",
                   "pm.collectionVariables.set(\"current_role\", \"student\");"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const email = (pm.variables.get(\"student_email\") || \"\").trim();",
+                  "const password = (pm.variables.get(\"student_password\") || \"\").trim();",
+                  "if (!email || !password) throw new Error(\"student_email / student_password vides : sélectionne l'environnement UniAbsences - Production et remplis Current value\");",
+                  "pm.variables.set(\"student_email\", email); pm.variables.set(\"student_password\", password);",
+                  "console.log(\"Connexion avec\", email);"
                 ]
               }
             }
@@ -3009,10 +3079,24 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "if (pm.response.code === 200) console.error(\"Identifiants refusés par Django pour\", pm.variables.get(\"secretaire_email\"), \"(formulaire réaffiché) : vérifie email / mot de passe\");",
                   "pm.test(\"Connexion réussie (302)\", () => pm.response.to.have.status(302));",
                   "const loc = pm.response.headers.get(\"Location\") || \"\";",
                   "pm.test(\"Pas de redirection vers login ni 2FA\", () => { pm.expect(loc).to.not.include(\"/login\"); pm.expect(loc).to.not.include(\"2fa\"); });",
                   "pm.collectionVariables.set(\"current_role\", \"secretaire\");"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const email = (pm.variables.get(\"secretaire_email\") || \"\").trim();",
+                  "const password = (pm.variables.get(\"secretaire_password\") || \"\").trim();",
+                  "if (!email || !password) throw new Error(\"secretaire_email / secretaire_password vides : sélectionne l'environnement UniAbsences - Production et remplis Current value\");",
+                  "pm.variables.set(\"secretaire_email\", email); pm.variables.set(\"secretaire_password\", password);",
+                  "console.log(\"Connexion avec\", email);"
                 ]
               }
             }
