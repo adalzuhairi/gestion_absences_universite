@@ -16,6 +16,11 @@ DEPENDANCES CLES : rest_framework.serializers, apps.absences.models, apps.academ
 from rest_framework import serializers
 
 from apps.absences.models import Absence, Justification
+from apps.absences.utils_upload import (
+    UploadValidationError,
+    generate_safe_upload_filename,
+    validate_uploaded_file,
+)
 from apps.academic_sessions.models import Seance
 from apps.academics.models import Cours
 from apps.accounts.models import User
@@ -324,9 +329,21 @@ class JustificationListSerializer(serializers.ModelSerializer):
 
 
 class JustificationCreateSerializer(serializers.ModelSerializer):
+    # Required here (unlike the model): same rules as the web upload form
+    document = serializers.FileField()
+
     class Meta:
         model = Justification
         fields = ["id_absence", "document", "commentaire"]
+
+    def validate_document(self, value):
+        # Extension + size + binary signature + MIME, then randomized name
+        try:
+            meta = validate_uploaded_file(value)
+        except UploadValidationError as exc:
+            raise serializers.ValidationError(exc.messages)
+        value.name = generate_safe_upload_filename(meta["extension"])
+        return value
 
     def validate_id_absence(self, value):
         # Ownership check: student can only justify their own absences
