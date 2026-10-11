@@ -2929,6 +2929,275 @@
               }
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "8. Secrétariat - permissions",
+      "item": [
+        {
+          "name": "Obtenir le jeton CSRF (Secrétariat)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/login/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "login",
+                ""
+              ]
+            },
+            "description": "Charge la page de connexion pour récupérer le cookie `csrftoken` (Django)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "const m = pm.response.text().match(/name=\"csrfmiddlewaretoken\" value=\"([^\"]+)\"/);",
+                  "if (m) pm.collectionVariables.set(\"csrftoken\", m[1]);",
+                  "pm.test(\"Jeton CSRF récupéré\", () => pm.expect(pm.collectionVariables.get(\"csrftoken\")).to.not.be.empty);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Connexion Secrétariat",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/login/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "login",
+                ""
+              ]
+            },
+            "description": "Connexion par session Django avec le compte **Secrétariat** (`secretaire_email` / `secretaire_password` de l'environnement). Le cookie `sessionid` est ensuite envoyé automatiquement par Postman. Attendu : redirection 302 vers le tableau de bord. Si 200 = identifiants refusés ; si redirection vers verify_2fa = désactiver la 2FA de ce compte pour la démo.",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "{{secretaire_email}}"
+                },
+                {
+                  "key": "password",
+                  "value": "{{secretaire_password}}"
+                },
+                {
+                  "key": "csrfmiddlewaretoken",
+                  "value": "{{csrftoken}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Connexion réussie (302)\", () => pm.response.to.have.status(302));",
+                  "const loc = pm.response.headers.get(\"Location\") || \"\";",
+                  "pm.test(\"Pas de redirection vers login ni 2FA\", () => { pm.expect(loc).to.not.include(\"/login\"); pm.expect(loc).to.not.include(\"2fa\"); });",
+                  "pm.collectionVariables.set(\"current_role\", \"secretaire\");"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "Lister les étudiants",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/students/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "students",
+                ""
+              ]
+            },
+            "description": "Le secrétariat gère les étudiants."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Réponse paginée (count, results)\", () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property(\"count\");",
+                  "  pm.expect(j.results).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lister les justificatifs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/justifications/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "justifications",
+                ""
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Réponse paginée (count, results)\", () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property(\"count\");",
+                  "  pm.expect(j.results).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modifier un étudiant (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/students/{{new_student_id}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "students",
+                "{{new_student_id}}",
+                ""
+              ]
+            },
+            "description": "Écriture autorisée pour le secrétariat (étudiant de test du dossier 3).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"niveau\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Export Excel des étudiants à risque",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/exports/at-risk-excel/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "exports",
+                "at-risk-excel",
+                ""
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Fichier Excel\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"spreadsheet\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Interdit : analytics admin (403)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/analytics/dashboard/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analytics",
+                "dashboard",
+                ""
+              ]
+            },
+            "description": "Les statistiques globales sont réservées à l'administrateur."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Déconnexion",
