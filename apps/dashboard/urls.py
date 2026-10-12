@@ -45,22 +45,22 @@ urlpatterns = [
     # Étudiant                                                           #
     # ------------------------------------------------------------------ #
 
-    # → views_student.py (via hub views.py)
+    # → views_student_dashboard.py (via views_student.py et hub views.py)
     path("student/", views.student_dashboard, name="student_dashboard"),
 
-    # → views_student.py (via hub views.py)
+    # → views_student_statistics.py (via views_student.py et hub views.py)
     path("student/stats/", views.student_statistics, name="student_statistics"),
 
-    # → views_student.py (via hub views.py)
+    # → views_student_courses.py (via views_student.py et hub views.py)
     path("student/courses/", views.student_courses, name="student_courses"),
 
-    # → views_student.py (via hub views.py)
+    # → views_student_absences.py (via views_student.py et hub views.py)
     path("student/absences/", views.student_absences, name="student_absences"),
 
-    # → views_student.py (via hub views.py)
+    # → views_student_absences.py (via views_student.py et hub views.py)
     path("student/reports/", views.student_reports, name="student_reports"),
 
-    # → views_student.py (via hub views.py)
+    # → views_student_courses.py (via views_student.py et hub views.py)
     path(
         "student/course/<int:inscription_id>/",
         views.student_course_detail,
@@ -71,23 +71,23 @@ urlpatterns = [
     # Professeur                                                         #
     # ------------------------------------------------------------------ #
 
-    # → views_professor.py (via hub views.py)
+    # → views_professor_dashboard.py (via views_professor.py et hub views.py)
     path("instructor/", views.instructor_dashboard, name="instructor_dashboard"),
 
-    # → views_professor.py (via hub views.py)
+    # → views_professor_course_list.py (via views_professor.py et hub views.py)
     path("instructor/courses/", views.instructor_courses, name="instructor_courses"),
 
-    # → views_professor.py (via hub views.py)
+    # → views_professor_sessions.py (via views_professor.py et hub views.py)
     path("instructor/sessions/", views.instructor_sessions, name="instructor_sessions"),
 
-    # → views_professor.py (via hub views.py)
+    # → views_professor_sessions.py (via views_professor.py et hub views.py)
     path(
         "instructor/statistics/",
         views.instructor_statistics,
         name="instructor_statistics",
     ),
 
-    # → views_professor.py (via hub views.py)
+    # → views_professor_course_detail.py (via views_professor.py et hub views.py)
     path(
         "instructor/course/<int:course_id>/",
         views.instructor_course_detail,
@@ -98,27 +98,27 @@ urlpatterns = [
     # Secrétariat — accueil, inscriptions, seuils, exports               #
     # ------------------------------------------------------------------ #
 
-    # → views_secretary_home.py (via hub views.py)
+    # → views_secretary_main.py (via views_secretary_home.py et hub views.py)
     path("secretary/", views.secretary_dashboard, name="secretary_dashboard"),
 
-    # → views_secretary_home.py (via hub views.py)
+    # → views_secretary_stats.py (via views_secretary_home.py et hub views.py)
     path(
         "secretary/enrollments/",
         views.secretary_enrollments,
         name="secretary_enrollments",
     ),
 
-    # → views_secretary_home.py (via hub views.py)
+    # → views_secretary_stats.py (via views_secretary_home.py et hub views.py)
     path(
         "secretary/seuils-absence/",
         views.secretary_seuils_absence,
         name="secretary_seuils_absence",
     ),
 
-    # → views_secretary_home.py (via hub views.py)
+    # → views_secretary_stats.py (via views_secretary_home.py et hub views.py)
     path("secretary/exports/", views.secretary_exports, name="secretary_exports"),
 
-    # → views_secretary_home.py (via hub views.py)
+    # → views_secretary_main.py (via views_secretary_home.py et hub views.py)
     # Vue en lecture seule déplacée pour éviter le conflit avec secretary_courses.
     path("secretary/active-courses/", views.active_courses, name="active_courses"),
 
@@ -263,7 +263,7 @@ urlpatterns = [
     # Admin — paramètres système                                         #
     # ------------------------------------------------------------------ #
 
-    # → views_admin_settings.py (via hub views_admin.py)
+    # → views_admin_settings_form.py (via views_admin_settings.py et hub views_admin.py)
     path("admin/settings/", views_admin.admin_settings, name="admin_settings"),
 
     # ------------------------------------------------------------------ #
@@ -295,17 +295,17 @@ urlpatterns = [
     # Admin — audit et logs                                              #
     # ------------------------------------------------------------------ #
 
-    # → views_admin_settings.py (via hub views_admin.py)
+    # → views_admin_audit.py (via views_admin_settings.py et hub views_admin.py)
     path("admin/audit-logs/", views_admin.admin_audit_logs, name="admin_audit_logs"),
 
-    # → views_admin_settings.py (via hub views_admin.py)
+    # → views_admin_audit.py (via views_admin_settings.py et hub views_admin.py)
     path(
         "admin/audit-logs/export-csv/",
         views_admin.admin_export_audit_csv,
         name="admin_export_audit_csv",
     ),
 
-    # → views_admin_settings.py (via hub views_admin.py)
+    # → views_admin_audit.py (via views_admin_settings.py et hub views_admin.py)
     path(
         "admin/qr-scan-logs/",
         views_admin.admin_qr_scan_logs,
