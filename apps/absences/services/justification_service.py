@@ -20,7 +20,7 @@ from django.utils import timezone
 # Nombre de jours calendaires après la date de la séance pendant lesquels
 # l'étudiant peut soumettre un document justificatif. Passé cette fenêtre,
 # l'absence est traitée définitivement comme non justifiée.
-JUSTIFICATION_DEADLINE_DAYS = 3
+JUSTIFICATION_DEADLINE_DAYS = 5
 
 
 def get_justification_deadline(absence):
