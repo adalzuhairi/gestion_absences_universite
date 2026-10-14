@@ -11,6 +11,7 @@ DEPENDANCES CLES : enrollments.Inscription, academic_sessions.Seance, accounts.U
 """
 
 import uuid
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from django.conf import settings
@@ -78,7 +79,7 @@ class Absence(models.Model):
         max_digits=6,
         decimal_places=2,
         verbose_name="Durée (h)",
-        validators=[MinValueValidator(0.01)],
+        validators=[MinValueValidator(Decimal("0.01"))],
         help_text="Durée de l'absence en heures",
     )
     statut = models.CharField(
