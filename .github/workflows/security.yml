@@ -1,11 +1,9 @@
 name: Security Deep Scan
 
+# Desactive automatiquement (projet presente) : execution manuelle uniquement
+# via l'onglet Actions > Run workflow. Les tests restent dans le depot.
 on:
-  # Scan complet declenchable a la demande.
   workflow_dispatch:
-  # Surveillance continue quotidienne.
-  schedule:
-    - cron: "17 3 * * *"
 
 concurrency:
   group: security-${{ github.workflow }}-${{ github.ref }}

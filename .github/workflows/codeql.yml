@@ -1,14 +1,8 @@
 name: CodeQL
 
+# Desactive automatiquement (projet presente) : execution manuelle uniquement
+# via l'onglet Actions > Run workflow. Les tests restent dans le depot.
 on:
-  pull_request:
-  push:
-    branches:
-      - main
-      - dev
-      - Dev
-  schedule:
-    - cron: "29 2 * * 1"
   workflow_dispatch:
 
 permissions:

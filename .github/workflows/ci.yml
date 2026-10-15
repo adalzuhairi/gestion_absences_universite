@@ -1,14 +1,8 @@
 name: CI
 
+# Desactive automatiquement (projet presente) : execution manuelle uniquement
+# via l'onglet Actions > Run workflow. Les tests restent dans le depot.
 on:
-  # Gate principal de merge.
-  pull_request:
-  # Validation continue sur branches d'integration.
-  push:
-    branches:
-      - main
-      - dev
-      - Dev
   workflow_dispatch:
 
 concurrency:
